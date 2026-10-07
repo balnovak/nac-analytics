@@ -311,8 +311,9 @@ def snapshot_for_job(
 def prechange_delta_job_id(job: dict[str, Any]) -> str:
     """Return the delta job ID of a completed pre-change analysis.
 
-    /deltaAnalysis/summary reads as all zeros while a job is still running, so
-    the status is checked first.
+    /deltaAnalysis/summary can still be mid-run after the parent job is
+    completed (zeros or partial counts), so callers must wait for the child
+    delta job before treating the summary as a verdict.
     """
     status = str(job.get("analysisStatus", "")).lower()
     if status != PRECHANGE_COMPLETED:
@@ -1043,9 +1044,9 @@ class NDClient:
     ) -> dict[str, Any]:
         """Fetch the anomaly summary for a delta analysis job.
 
-        This reads as all zeros while a job is still running, so callers must
-        check the job status first. Acknowledged anomalies are excluded
-        server-side by default.
+        A running job can return zeros or partial counts, so callers must wait
+        until the job is COMPLETE before using this as a verdict. Acknowledged
+        anomalies are excluded server-side by default.
         """
         return self.get_json(
             f"{ANALYZE}/deltaAnalysis/summary",

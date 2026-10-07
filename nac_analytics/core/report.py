@@ -97,8 +97,8 @@ class Verdict:
 def build_verdict(summary: dict[str, Any], fail_on: tuple[str, ...]) -> Verdict:
     """Decide pass or fail from a `/deltaAnalysis/summary` response.
 
-    The summary reads as all zeros while a job is still running, so the caller
-    must have checked the job status first.
+    A running delta job can return zeros or partial counts, so the caller must
+    have waited for the job to complete first.
     """
     counts: dict[str, int] = {}
     for row in summary.get("anomalyCountBySeverity") or []:

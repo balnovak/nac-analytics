@@ -300,6 +300,32 @@ def test_prechange_uploads_a_plan(
     assert (tmp_path / "prechange-report.xml").is_file()
 
 
+def test_prechange_waits_for_the_delta_job_before_reading_its_summary(
+    use_lab, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.chdir(tmp_path)
+    lab = build_lab()
+    lab.add(
+        JOBS_SUMMARY_PATH,
+        [
+            json_response({"entries": [{"jobId": "delta-1", "status": "RUNNING"}]}),
+            json_response({"entries": [{"jobId": "delta-1", "status": "COMPLETE"}]}),
+        ],
+    )
+
+    def summary(_request: httpx.Request) -> httpx.Response:
+        finished = len(lab.requests_to(JOBS_SUMMARY_PATH)) >= 2
+        return json_response(_summary(new_critical=0 if finished else 1))
+
+    lab.add(DELTA_SUMMARY_PATH, summary)
+    use_lab(lab)
+
+    result = runner.invoke(app, ["nd", "prechange", "--job-id", "pc-1"], env=ENV)
+
+    assert result.exit_code == 0, result.output
+    assert len(lab.requests_to(JOBS_SUMMARY_PATH)) == 2
+
+
 def test_compliance_single_fabric(
     use_lab, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:

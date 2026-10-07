@@ -316,6 +316,9 @@ def _prechange_result_from_job(
         end_date=until,
     )
     delta_job_id = prechange_delta_job_id(job)
+    # A completed pre-change job can still have a running delta job.
+    note(f"Waiting for delta analysis {delta_job_id}...")
+    client.wait_delta_job(delta_job_id)
     note("Collecting change approval detail...")
     compliance = compliance_for_snapshot(
         client,
