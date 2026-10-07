@@ -4,6 +4,12 @@ All notable changes to this project are documented here.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [Unreleased]
+
+### Fixed
+
+- `prechange` waits for the spawned delta job before reading `/deltaAnalysis/summary`. A completed parent job can still have a running child, and a mid-run summary may contain partial counts.
+
 ## [0.2.0] - 2026-09-11
 
 ### Added
